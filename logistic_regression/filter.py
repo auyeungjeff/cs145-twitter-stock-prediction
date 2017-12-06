@@ -79,7 +79,7 @@ def classify(filename): #get the floor
     with open("logreglist.txt", 'w') as lrout:
         for item in datalist:
             print(item)
-            lrout.write("%s\n" % item)
+            lrout.write("{0}\n".format(item))
 
 if __name__ == '__main__':
     filename = "logreg.txt"

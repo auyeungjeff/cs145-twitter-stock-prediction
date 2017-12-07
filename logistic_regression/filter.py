@@ -7,17 +7,8 @@ import matplotlib.pylab as plt
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 def test(filename):
-    sid = SentimentIntensityAnalyzer()
-    with open(filename, 'r') as input:
-        for line in input:
-            old_data = []
-            old_data.append(json.loads(line))
-            sentence = str(old_data[0]['text'])
-            ss = sid.polarity_scores(sentence)  # Gives the sentiment score.
-            scores_formatted = "{\"neg\": " + str(ss['neg']) + ", \"neu\": " + str(ss['neu']) + ", \"pos\": " + str(ss['pos']) \
-                    + ", \"compound\": " + str(ss['compound']) + "}"
-            print(scores_formatted)
-
+    #function = TIME_SERIES_INTRADAY & symbol = NVDA & interval = 60min & outputsize = full & apikey = 9WT5AOEK0XH0ZYNI
+   # https: // www.alphavantage.co / query?function = TIME_SERIES_INTRADAY & symbol = MSFT & interval = 60min & apikey = demo
 def filter(filenameout):
     #nltk.download() #<--You may need to run this first to get it to work.
     sid = SentimentIntensityAnalyzer()
@@ -60,29 +51,39 @@ def classify(filename): #get the floor
             timestamp1 = old_data[0]['created_at']
             t1 = datetime.strptime(timestamp1, "%a %b %d %H:%M:%S %z %Y")
             t1 = t1.replace( minute=0,second=0,microsecond=0)
-            index = int(str(t1.month) + str(t1.day) + str(t1.hour))
+            index = int(t1.strftime("%m") + t1.strftime("%d") + t1.strftime("%H"))
             if base == 0:
-                base = index
+                base = t1
             if old_data[0]['scores']['compound'] != 0:
                 if index in datax:
-                    datax[index] = datax[index] + old_data[0]['scores']['compound']
+                    datax[index][0] = datax[index][0] + old_data[0]['scores']['compound']
                     length[index] += 1
                 else:
-                    datax[index] = old_data[0]['scores']['compound']
+                    templist = list()
+                    templist.append(old_data[0]['scores']['compound'])
+                    templist.append(t1)
+                    datax[index] = templist
                     length[index] = 1
 
     for key in datax:
-        datax[key] /= length[key]
-        datax[key] = 1/(1 + math.exp(datax[key]))
+        datax[key][0] /= length[key]
+        datax[key][0] = 1/(1 + math.exp(datax[key][0]))
         datalist.append((key,datax[key]))
 
-    with open("logreglist.txt", 'w') as lrout:
-        for item in datalist:
-            print(item)
-            lrout.write("{0}\n".format(item))
+    #with open("logreglist.txt", 'w') as lrout:
+    #    for item in datalist:
+    #        print(item)
+    #        lrout.write("{0}\n".format(item))
+
+    x,y = zip(*datalist)
+    w,z = zip(*y)
+    for entry in z:
+        entry = (entry - base).total_seconds()/3600
+    plt.plot(z,w)
+    plt.show()
 
 if __name__ == '__main__':
     filename = "logreg.txt"
     #test("code20171119-132758.txt")
     #filter(filename)
-    classify(filename)
+    #classify(filename)
